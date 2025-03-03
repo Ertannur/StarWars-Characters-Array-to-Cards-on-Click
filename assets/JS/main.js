@@ -1,3 +1,6 @@
+
+// githubdaki arrayi köşeli parantez içindeki copy pasteleyip burada starWarsData adında bir const a tanımlıyorum.
+// json dosyası js içine kopyalandığında bir hata oluşmuyor. tersini yapsaydım hata olurdu ama.
 const starWarsData = [
   {
     id: 1,
@@ -120,19 +123,49 @@ const starWarsData = [
   },
 ];
 
+const homeworldsRaw = starWarsData.map((prop) => {
+  // Burada homeworldleri sıralayıp return olarak veriyorum ama
+  // prop.homeworld = prop.homeworld ?? 'other'; diyorum veya alttaki kısa yazımı ??= ile
+  // yani nullish coalescing kontrolü yapıyorum. Değerlerden biri null ve undefined ise
+  // 'other' değeri ile değiştirilsin diyorum.
+  prop.homeworld ??= "other";
+  return prop.homeworld;
+});
+console.log(homeworldsRaw);
 
+// önce dışarda bir homeworldsUnique adında boş bir array tanımlıyorum.
+// for döngüsündeki if; her bir elemana sıra gelip tarandığında unique arrayi içerisinde
+// bu değer henüz yoksa (!.) ozaman bunu unique arrayine pushla yani sonuna ekle diyorum.
+const homeworldsUnique = [];
+for (let i = 0; i < homeworldsRaw.length; i++) {
+  if (!homeworldsUnique.includes(homeworldsRaw[i])) {
+    homeworldsUnique.push(homeworldsRaw[i]);
+  }
+}
+console.log(homeworldsUnique);
 
+// oluşturduğum arraydeki elemanları komple küçük harfle yazılmış haline çeviriyorum.
+const homeworldsLowerCase = homeworldsUnique.map((prop) => {
+  return prop.toLowerCase();
+});
+console.log(homeworldsLowerCase);
+
+//sonuç listeyi buna tanımlamam istendi ödevde. tekrar extradan yaptım. baştan da son üstteki const u bu isimle tanımlayabilirdim.
+const homeworlds = homeworldsLowerCase;
+
+// veri alışverişinde bulunmak istediğim divlere ulaşım yolu tanımlıyorum.
+const radioContainer = document.getElementById("radioContainer");
 const cardContainer = document.getElementById("cardContainer");
 const toggleButton = document.getElementById("showMeBtn");
 
-function clickShowMe() {
-  toggleButton.addEventListener("click", function () {
-    const btnText = toggleButton.innerHTML;
-    if (btnText === "Karakterleri Göster!") {
-      const cardsGenerate = starWarsData
-        .map(
-          (item) => `
-        <div class="card" style="width: 18rem;">
+// js içinde bu fonksiyon aracılığıyla card oluşturmayı tanımlıyorum. içinde template literal string kullanarak 
+// yani özel `` tırnak işaretleri içinde ${değişken} biçimini kullandım. buradaki gibi tırnak tırnak içinde olan ve 
+// dışardan değişken içinde tanımlamam gereken durumlarda bu yöntemi kullanmalıyım. En kolayı sanki.
+function generateCards(data) {
+  const cardsGenerate = data
+    .map(
+      (item) => `
+    <div class="card" style="width: 18rem;">
           <img src="${item.pic}" class="card-img-top" alt='${item.name}'>
           <div class="card-body">
             <h5 class="card-title">Name: ${item.name}</h5>
@@ -140,17 +173,65 @@ function clickShowMe() {
           </div>
         </div>
         `
+    )
+    .join("");
+  // join ile tüm array elemanları tek bir string içerisine toplanıyor ve
+  //  aralarında dizerken kullanmak istediğim ayracı belirtiyorum.
+  // Parantez içindeki tırnakların arasına ne yazarsam
+  // o ayraç olarak kullanılıyor. burada hiçbirşey yok o yüzden bitişik bir tablo
+  //çıkıyor ortaya.
+  cardContainer.innerHTML = cardsGenerate;
+}
+
+// radio seçeneklerini değiştirdiğimde hepsinin name i aynı olduğu için aralarında sadece bir tanesini seçebiliyorum.
+// değişik birini tıkladığım anda 'change' tetiklemiş oluyorum ve bu da içlerindeki her içinde name=homeworld attributu tanımlı
+// inputa bakıp checked sınıfına/özelliğine sahip mi diye bakıyor. ve öyleyse, yine içinde tanımladığım value değerini alıp 
+// oluşturduğum filterValue değişkenine atıyor.
+radioContainer.addEventListener("change", (event) => {
+  const filterValue = document.querySelector(
+    "input[name='homeworld']:checked"
+  ).value;
+
+  // sonrasında bu yeni değişken içinde entepedeki orjinal arraye gidip elemanları içinde (item) homeworldlerin küçük harflere çevrilmiş halleri ile
+  // filterValue daki seçtiğim o bir radiodaki isim ile aynı olanları (yani orjinal arraydeki obje elemanları filtreliyor.) 
+  const filteredHomeworlds = starWarsData.filter(
+    (item) => item.homeworld.toLowerCase() === filterValue
+  );
+
+  // ve nihayetinde bunları card fonksiyonu içine sokup o bölümde ilgili cardları oluşturuyor ve gösteriyor. (hepsi yerine)
+  generateCards(filteredHomeworlds);
+});
+
+// bütün üsttekileri ve ek olarak buton renk değişimlerinin değişimlerini aşağıdaki fonksiyon içinde if ve else if tanımına bağladım.
+// tekrar gizleme şartlarını belirleyebilmek için else if kullanımı önemliydi burada.
+function clickShowMe() {
+  toggleButton.addEventListener("click", function () {
+    const btnText = toggleButton.innerHTML;
+    if (btnText === "Karakterleri Göster!") {
+      // ilk Karakterleri göster butonuna bastığımda hepsinin sıralanması için aşağıdaki generateCards(starWarsData)yı bırakıyorum.
+      // sonrasında yapacağım seçim işlemi zaten gereken manipülasyonu yapıp yani filtrelemeyi buradaki durumda, bana istediğim sonucu veriyor.
+      generateCards(starWarsData);
+// burada butona basınca js tarafından oluşturulması için yine template literal string içerisinde radio seçeneklerinin
+//oluşturulmasını tanımladım.
+      const radioGenerate = homeworlds
+        .map(
+          (item) => `
+  <div class="form-check">
+     <input class="form-check-input" type="radio" name='homeworld' id=${item} value=${item}>
+     <label class="form-check-label" for=${item}>
+       ${item}
+     </label>
+    </div>
+  `
         )
         .join("");
-        // join ile tüm array elemanları tek bir string içerisine toplanıyor ve
-        //  aralarında dizerken kullanmak istediğim ayracı belirtiyorum. 
-        // Parantez içindeki tırnakların arasına ne yazarsam 
-        // o ayraç olarak kullanılıyor. burada hiçbirşey yok o yüzden bitişik bir tablo 
-        //çıkıyor ortaya.
-      cardContainer.innerHTML = cardsGenerate;
+
+      radioContainer.innerHTML = radioGenerate;
       toggleButton.innerHTML = "Karakterleri Gizle!";
       toggleButton.style.backgroundColor = "#f00";
     } else if (btnText === "Karakterleri Gizle!") {
+      //içeriğin tekrar silinmesi için içi boş tırnak işaretleri
+      radioContainer.innerHTML = "";
       cardContainer.innerHTML = "";
       toggleButton.innerHTML = "Karakterleri Göster!";
       toggleButton.style.backgroundColor = "#adff2f";
@@ -158,6 +239,10 @@ function clickShowMe() {
   });
 }
 
+// butonun html kodu içinde onclick tanımlamak yerine buradan sayfa açılır açılmaz hazır olması daha hoşuma gidiyor. 
+// ama sayfa performansı açısında verimli mi bunu araştırıp öğrenmem lazım.
+// diğer fonksiyon burada tanımlı değil çünkü o radio seçen ekleri arasında change yaptığımda zaten tetikleniyor olacak.
+// burada gereksiz başlatmama gerek yok.
 window.onload = function () {
   clickShowMe();
 };
